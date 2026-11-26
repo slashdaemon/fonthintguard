@@ -1,0 +1,6 @@
+{
+  "pack": {
+    "pack_format": 34,
+    "description": "Font Hinting Guard canary: every capital A uses hint-canary.ttf"
+  }
+}

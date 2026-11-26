@@ -1,0 +1,25 @@
+{
+  "providers": [
+    {
+      "type": "ttf",
+      "file": "minecraft:hint-canary.ttf",
+      "size": 16.0,
+      "oversample": 2.0
+    },
+    {
+      "type": "reference",
+      "id": "minecraft:include/space"
+    },
+    {
+      "type": "reference",
+      "id": "minecraft:include/default",
+      "filter": {
+        "uniform": false
+      }
+    },
+    {
+      "type": "reference",
+      "id": "minecraft:include/unifont"
+    }
+  ]
+}

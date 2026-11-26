@@ -1,0 +1,102 @@
+plugins {
+    id 'net.neoforged.moddev' version '2.0.144'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+    // fonthintguard-1.0.0-neoforge-1.21.1.jar
+    archivesName = "${project.archives_base_name}"
+}
+
+repositories {
+    mavenCentral()
+}
+
+jar {
+    archiveVersion = "${project.mod_version}-neoforge-${project.minecraft_version}"
+    from("LICENSE") {
+        rename { "${it}_${project.archives_base_name}" }
+    }
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
+    withSourcesJar()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.release = 21
+}
+
+neoForge {
+    version = project.neoforge_version
+
+    parchment {
+        minecraftVersion = project.parchment_minecraft_version
+        mappingsVersion = project.parchment_mappings_version
+    }
+
+    runs {
+        // Dev client with this mod loaded
+        client {
+            client()
+            gameDirectory = project.file("run-client")
+        }
+        // Same client without this mod, for the before/after canary comparison
+        vanillaClient {
+            client()
+            gameDirectory = project.file("run-client")
+            loadedMods = []
+        }
+    }
+
+    mods {
+        fonthintguard {
+            sourceSet sourceSets.main
+        }
+    }
+}
+
+// Unit tests call LWJGL FreeType directly: the exact natives Minecraft 1.21.1 ships.
+def lwjglNatives = {
+    def os = System.getProperty('os.name').toLowerCase()
+    def arch = System.getProperty('os.arch').toLowerCase()
+    def arm = arch.contains('aarch64') || arch.contains('arm64')
+    if (os.contains('win')) return arm ? 'natives-windows-arm64' : 'natives-windows'
+    if (os.contains('mac')) return arm ? 'natives-macos-arm64' : 'natives-macos'
+    return arm ? 'natives-linux-arm64' : 'natives-linux'
+}()
+
+dependencies {
+    testImplementation "org.lwjgl:lwjgl:${project.lwjgl_version}"
+    testImplementation "org.lwjgl:lwjgl-freetype:${project.lwjgl_version}"
+    testRuntimeOnly "org.lwjgl:lwjgl:${project.lwjgl_version}:${lwjglNatives}"
+    testRuntimeOnly "org.lwjgl:lwjgl-freetype:${project.lwjgl_version}:${lwjglNatives}"
+    testImplementation platform('org.junit:junit-bom:5.11.3')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events 'passed', 'failed', 'skipped'
+        showStandardStreams = true
+        exceptionFormat = 'full'
+    }
+}
+
+processResources {
+    def props = [
+            version          : project.mod_version,
+            neoforge_range   : project.neoforge_range,
+            minecraft_range  : project.minecraft_range,
+    ]
+    inputs.properties props
+
+    filesMatching("META-INF/neoforge.mods.toml") {
+        expand props
+    }
+}

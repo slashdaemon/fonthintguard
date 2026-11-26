@@ -29,7 +29,7 @@ When it's working, your game log contains:
 
 It's only needed on the client. Servers don't need it, and players with or without it can join the same server.
 
-**Supported:** Minecraft 1.21.1 with NeoForge 21.1.x. Minecraft 26.x doesn't need it, because Mojang already ships the fixed FreeType there.
+**Supported:** Minecraft 1.21.1 only, with any NeoForge 21.1 release (21.1 is NeoForge's version series for Minecraft 1.21.1). Minecraft 26.x doesn't need it, because Mojang already ships the fixed FreeType there.
 
 ## How it works
 

@@ -21,6 +21,11 @@ jar {
     }
 }
 
+// Empty source set for runVanillaClient: a classpath with Minecraft but none of this mod
+sourceSets {
+    vanilla {}
+}
+
 java {
     toolchain.languageVersion = JavaLanguageVersion.of(21)
     withSourcesJar()
@@ -48,6 +53,7 @@ neoForge {
         vanillaClient {
             client()
             gameDirectory = project.file("run-client")
+            sourceSet = sourceSets.vanilla
             loadedMods = []
         }
     }
@@ -57,6 +63,8 @@ neoForge {
             sourceSet sourceSets.main
         }
     }
+
+    addModdingDependenciesTo sourceSets.vanilla
 }
 
 // Unit tests call LWJGL FreeType directly: the exact natives Minecraft 1.21.1 ships.

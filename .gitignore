@@ -24,3 +24,6 @@ logs/
 
 # MDG dev client game dir
 run-client/
+
+# Locally collected release jar
+dist/

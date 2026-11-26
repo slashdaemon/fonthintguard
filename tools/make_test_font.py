@@ -1,7 +1,7 @@
 """Build hint-canary.ttf: a harmless one-glyph TrueType font whose glyph program moves the glyph.
 
-Glyph "A" is a plain box. Its hinting program shifts all four points 100 pixels up (SHPIX on the
-y axis). If FreeType runs the program, the glyph comes out 100 px too high; if hinting is off, it
+Glyph "A" is a plain box. Its hinting program touches all four points (MDAP) and then shifts them
+100 pixels up (SHPIX on the y axis). If FreeType runs the program, the glyph comes out 100 px too high; if hinting is off, it
 sits where its outline says. The unit tests and the canary resource pack use this to prove the
 mod's load flags stop FreeType from running a font's bytecode, without any exploit code.
 
@@ -35,6 +35,10 @@ def main(out):
     program = ttProgram.Program()
     program.fromAssembly([
         "SVTCA[0]",                                   # freedom/projection vector = y axis
+        # FreeType's default v40 interpreter ignores SHPIX on points not yet touched in y, so
+        # touch all four first (MDAP without rounding doesn't move them).
+        "PUSH[ ] 3 2 1 0",
+        "MDAP[0]", "MDAP[0]", "MDAP[0]", "MDAP[0]",
         f"PUSH[ ] 0 1 2 3 {SHIFT_PX * 64} 4",          # points, distance (F26Dot6), loop count
         "SLOOP[ ]",                                    # repeat the next instruction for 4 points
         "SHPIX[ ]",                                    # shift each point by the distance

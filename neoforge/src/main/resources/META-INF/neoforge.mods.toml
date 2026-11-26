@@ -1,0 +1,33 @@
+modLoader = "javafml"
+loaderVersion = "[1,)"
+license = "MIT"
+issueTrackerURL = "https://github.com/slashdaemon/fonthintguard/issues"
+
+[[mods]]
+modId = "fonthintguard"
+version = "${version}"
+displayName = "Font Hinting Guard"
+authors = "Slash"
+displayURL = "https://github.com/slashdaemon/fonthintguard"
+# Client-only: the server never needs it and vanilla/other clients can join either way
+displayTest = "IGNORE_ALL_VERSION"
+description = '''
+Turns off TrueType font hinting so a malicious font in a resource pack can't reach FreeType's hinting interpreter (the "Minecraft2Shell" bug). Minecraft 1.20.5 through 1.21.11 ship FreeType 2.13.2, which Mojang has not patched there.
+'''
+
+[[mixins]]
+config = "fonthintguard.mixins.json"
+
+[[dependencies.fonthintguard]]
+modId = "neoforge"
+type = "required"
+versionRange = "${neoforge_range}"
+ordering = "NONE"
+side = "CLIENT"
+
+[[dependencies.fonthintguard]]
+modId = "minecraft"
+type = "required"
+versionRange = "${minecraft_range}"
+ordering = "NONE"
+side = "CLIENT"

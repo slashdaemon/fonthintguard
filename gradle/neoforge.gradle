@@ -1,0 +1,70 @@
+// Shared build for the two NeoForge jars (versions/neoforge-*). NeoForge runs on Mojang names with no
+// refmap and the mixins target methods by name, so one jar covers every NeoForge line of its era
+// (glyph_era: getglyph = MC 1.20.5..1.21.1 (NeoForge jar from 1.20.6), loadglyph = 1.21.2..1.21.11; see common/src/<era>).
+def root = rootProject.projectDir
+
+base {
+    archivesName = project.archives_base_name
+}
+
+sourceSets {
+    main {
+        java.srcDirs = ["${root}/common/src/main/java", "${root}/common/src/${project.glyph_era}/java",
+                        "${root}/neoforge/src/main/java"]
+        resources.srcDirs = ["${root}/common/src/main/resources", "${root}/neoforge/src/main/resources"]
+    }
+    // Empty source set for runVanillaClient: a classpath with Minecraft but none of this mod
+    vanilla {}
+}
+
+jar {
+    // fonthintguard-1.1.0-neoforge-1.20.6-1.21.1.jar
+    archiveVersion = "${project.mod_version}-neoforge-${project.range_label}"
+    from("${root}/LICENSE") {
+        rename { "${it}_${project.archives_base_name}" }
+    }
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
+}
+
+neoForge {
+    version = project.neoforge_version
+
+    runs {
+        // Dev client with this mod loaded
+        client {
+            client()
+            gameDirectory = project.file("run-client")
+        }
+        // Same client without this mod, for the before/after canary comparison
+        vanillaClient {
+            client()
+            gameDirectory = project.file("run-client")
+            sourceSet = sourceSets.vanilla
+            loadedMods = []
+        }
+    }
+
+    mods {
+        fonthintguard {
+            sourceSet sourceSets.main
+        }
+    }
+
+    addModdingDependenciesTo sourceSets.vanilla
+}
+
+processResources {
+    def props = [
+            version        : project.mod_version,
+            neoforge_range : project.neoforge_range,
+            minecraft_range: project.minecraft_range,
+    ]
+    inputs.properties props
+
+    filesMatching("META-INF/neoforge.mods.toml") {
+        expand props
+    }
+}

@@ -1,73 +1,45 @@
 plugins {
-    id 'net.neoforged.moddev' version '2.0.144'
+    id 'java'
+    id 'net.neoforged.moddev' version '2.0.144' apply false
+    id 'fabric-loom' version '1.13.6' apply false
 }
 
-version = project.mod_version
-group = project.maven_group
+// The root project runs the FreeType unit tests. They need only HintFlags (no Minecraft), so main
+// compiles just that one shared file; the mod jars come from versions/*.
 
-base {
-    // fonthintguard-1.0.0-neoforge-1.21.1.jar
-    archivesName = "${project.archives_base_name}"
-}
+allprojects {
+    version = project.mod_version
+    group = project.maven_group
 
-repositories {
-    mavenCentral()
-}
-
-jar {
-    archiveVersion = "${project.mod_version}-neoforge-${project.minecraft_version}"
-    from("LICENSE") {
-        rename { "${it}_${project.archives_base_name}" }
+    repositories {
+        mavenCentral()
     }
-}
 
-// Empty source set for runVanillaClient: a classpath with Minecraft but none of this mod
-sourceSets {
-    vanilla {}
+    tasks.withType(JavaCompile).configureEach {
+        it.options.release = 21
+        it.options.encoding = 'UTF-8'
+    }
 }
 
 java {
     toolchain.languageVersion = JavaLanguageVersion.of(21)
-    withSourcesJar()
 }
 
-tasks.withType(JavaCompile).configureEach {
-    it.options.release = 21
+sourceSets {
+    main {
+        java {
+            srcDirs = ['common/src/main/java']
+            include 'dev/blockacademy/fonthintguard/HintFlags.java'
+        }
+        resources.srcDirs = []
+    }
+    test {
+        java.srcDirs = ['common/src/test/java']
+        resources.srcDirs = ['common/src/test/resources']
+    }
 }
 
-neoForge {
-    version = project.neoforge_version
-
-    parchment {
-        minecraftVersion = project.parchment_minecraft_version
-        mappingsVersion = project.parchment_mappings_version
-    }
-
-    runs {
-        // Dev client with this mod loaded
-        client {
-            client()
-            gameDirectory = project.file("run-client")
-        }
-        // Same client without this mod, for the before/after canary comparison
-        vanillaClient {
-            client()
-            gameDirectory = project.file("run-client")
-            sourceSet = sourceSets.vanilla
-            loadedMods = []
-        }
-    }
-
-    mods {
-        fonthintguard {
-            sourceSet sourceSets.main
-        }
-    }
-
-    addModdingDependenciesTo sourceSets.vanilla
-}
-
-// Unit tests call LWJGL FreeType directly: the exact natives Minecraft 1.21.1 ships.
+// Unit tests call LWJGL FreeType directly: the exact natives Minecraft 1.20.5 through 1.21.11 ship.
 def lwjglNatives = {
     def os = System.getProperty('os.name').toLowerCase()
     def arch = System.getProperty('os.arch').toLowerCase()
@@ -96,15 +68,12 @@ test {
     }
 }
 
-processResources {
-    def props = [
-            version          : project.mod_version,
-            neoforge_range   : project.neoforge_range,
-            minecraft_range  : project.minecraft_range,
-    ]
-    inputs.properties props
+jar.enabled = false
 
-    filesMatching("META-INF/neoforge.mods.toml") {
-        expand props
-    }
+// Copies the five release jars into dist/.
+tasks.register('collectJars', Copy) {
+    def jars = ['neoforge-1.20.6': 'jar', 'neoforge-1.21.2': 'jar',
+                'fabric-1.20.5': 'remapJar', 'fabric-1.21.2': 'remapJar', 'fabric-1.21.9': 'remapJar']
+    jars.each { name, task -> from(project(":versions:${name}").tasks.named(task)) }
+    into layout.projectDirectory.dir('dist')
 }

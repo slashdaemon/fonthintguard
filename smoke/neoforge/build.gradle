@@ -1,0 +1,16 @@
+plugins {
+    id 'net.neoforged.moddev' version '2.0.144'
+}
+
+// No sources: the client loads only NeoForge plus whatever run.sh put in <gamedir>/mods (the shipped jar).
+java { toolchain.languageVersion = JavaLanguageVersion.of(21) }
+
+neoForge {
+    version = property('neoforge')
+    runs {
+        client {
+            client()
+            gameDirectory = file(property('gamedir'))
+        }
+    }
+}

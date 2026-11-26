@@ -27,3 +27,14 @@ run-client/
 
 # Locally collected release jar
 dist/
+
+# Per-project dev runs and build output
+versions/*/run/
+versions/*/run-client/
+versions/*/build/
+
+# Boot test harness output
+smoke/runs/
+smoke/.gradle/
+smoke/*/build/
+smoke/*/.gradle/

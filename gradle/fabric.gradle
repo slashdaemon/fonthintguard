@@ -1,0 +1,67 @@
+// Shared build for the three Fabric jars (versions/fabric-*). Loom remaps each mixin target to a full
+// intermediary descriptor, e.g. method_61902(ILorg/lwjgl/util/freetype/FT_Face;I)Lnet/minecraft/class_379;
+// so a jar covers only the versions where that descriptor holds:
+//   1.20.5-1.21.1  getGlyph  method_2040  -> class_379   (glyph_era getglyph)
+//   1.21.2-1.21.8  loadGlyph method_61902 -> class_379   (glyph_era loadglyph)
+//   1.21.9-1.21.11 loadGlyph method_61902 -> class_11759 (GlyphInfo became UnbakedGlyph)
+// NativeImage.copyFromFont is method_4316 throughout. Checked against every version's mappings.
+def root = rootProject.projectDir
+
+base {
+    archivesName = project.archives_base_name
+}
+
+sourceSets {
+    main {
+        java.srcDirs = ["${root}/common/src/main/java", "${root}/common/src/${project.glyph_era}/java",
+                        "${root}/fabric/src/main/java"]
+        resources.srcDirs = ["${root}/common/src/main/resources", "${root}/fabric/src/main/resources"]
+    }
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
+}
+
+loom {
+    runs {
+        configureEach {
+            runDir "run"
+        }
+    }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings loom.officialMojangMappings()
+    // Only Fabric Loader: the mod uses no Fabric API (so Quilt should load it too; untested).
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+}
+
+jar {
+    // Dev (named) jar; the release jar is remapJar's
+    archiveClassifier = "dev"
+}
+
+remapJar {
+    // fonthintguard-1.1.0-fabric-1.20.5-1.21.8.jar
+    archiveFileName = "${project.archives_base_name}-${project.mod_version}-fabric-${project.range_label}.jar"
+}
+
+tasks.withType(Jar).configureEach {
+    from("${root}/LICENSE") {
+        rename { "${it}_${project.archives_base_name}" }
+    }
+}
+
+processResources {
+    def props = [
+            version      : project.mod_version,
+            minecraft_dep: project.minecraft_dep,
+    ]
+    inputs.properties props
+
+    filesMatching("fabric.mod.json") {
+        expand props
+    }
+}

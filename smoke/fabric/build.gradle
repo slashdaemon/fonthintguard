@@ -1,0 +1,17 @@
+plugins {
+    id 'fabric-loom' version '1.13.6'
+}
+
+// Loom's production run: the real (intermediary) game with the shipped jar, not a dev environment.
+java { toolchain.languageVersion = JavaLanguageVersion.of(21) }
+
+dependencies {
+    minecraft "com.mojang:minecraft:${property('mc')}"
+    mappings loom.officialMojangMappings()
+    modImplementation "net.fabricmc:fabric-loader:${property('loader_version')}"
+}
+
+tasks.register('prodClient', net.fabricmc.loom.task.prod.ClientProductionRunTask) {
+    mods.from(project.file(project.property('jar')))
+    runDir = project.file(project.property('gamedir'))
+}
